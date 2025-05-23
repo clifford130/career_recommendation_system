@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Career Recommendations</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 2rem;
+      background: #f8f9fa;
+    }
+    .form-container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .results-container {
+      margin-top: 2rem;
+    }
+    .result-title {
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+    .card-text-truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 3; /* number of lines to show */
+      -webkit-box-orient: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center mb-4">Intelligent Career Recommender</h1>
+    
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10 form-container">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="current_skills" class="form-label">Skills You Have (comma-separated)</label>
+            <input type="text" class="form-control" name="current_skills" id="current_skills" placeholder="e.g., Python, Java, Project Management">
+          </div>
+          <div class="mb-3">
+            <label for="current_courses" class="form-label">Current Course(s) You Are Taking</label>
+            <input type="text" class="form-control" name="current_courses" id="current_courses" placeholder="e.g., CS50, Intro to Data Science, Machine Learning Nanodegree">
+          </div>
+          <div class="mb-3">
+            <label for="learning_aspirations" class="form-label">What You Want to Learn (comma-separated keywords or short phrases)</label>
+            <input type="text" class="form-control" name="learning_aspirations" id="learning_aspirations" placeholder="e.g., Artificial Intelligence, Cloud Computing, Web Development">
+          </div>
+          <div class="mb-3">
+            <label for="description" class="form-label">General Description of Your Career Aspirations</label>
+            <textarea class="form-control" name="description" id="description" rows="4" placeholder="Describe your ideal career, what motivates you, and any specific roles or industries you are interested in."></textarea>
+          </div>
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary">Get Recommendation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- New AI-Driven Recommendation Display -->
+    {% if best_match %}
+    <div class="row results-container justify-content-center mt-4">
+      <div class="col-lg-10 col-md-12">
+        <h2>Best Career Match</h2>
+        <div class="card mb-3">
+          <div class="card-header bg-primary text-white">
+            <h4>{{ best_match.title }} (Score: {{ best_match.score|floatformat:2 }})</h4>
+          </div>
+          <div class="card-body">
+            {% if best_match.details %}
+              <p><strong>Description:</strong> {{ best_match.details.description }}</p>
+              <h5>Required Skills:</h5>
+              <ul>
+                {% for skill in best_match.details.required_skills %}<li>{{ skill }}</li>{% empty %}<li>No specific skills listed.</li>{% endfor %}
+              </ul>
+              <h5>Education:</h5>
+              <ul>
+                {% for edu in best_match.details.education %}<li>{{ edu }}</li>{% empty %}<li>No specific education listed.</li>{% endfor %}
+              </ul>
+            {% else %}
+              <p><em>Detailed information from local knowledge base not available for this career.</em></p>
+            {% endif %}
+
+            {% if best_match.online_info %}
+              <hr><h5>Online Information Snippets:</h5>
+              {% if best_match.online_info.description %}
+                <p><strong>Description:</strong></p>
+                <ul>{% for item in best_match.online_info.description %}<li>{{ item }}</li>{% empty %}<li>No description snippets found.</li>{% endfor %}</ul>
+              {% endif %}
+              {% if best_match.online_info.skills_info %}
+                <p><strong>Skills Info:</strong></p>
+                <ul>{% for item in best_match.online_info.skills_info %}<li>{{ item }}</li>{% empty %}<li>No skills info snippets found.</li>{% endfor %}</ul>
+              {% endif %}
+              {% if best_match.online_info.job_postings_info %}
+                <p><strong>Job Postings:</strong></p>
+                <ul>{% for item in best_match.online_info.job_postings_info %}<li>{{ item }}</li>{% empty %}<li>No job posting snippets found.</li>{% endfor %}</ul>
+              {% endif %}
+               {% if best_match.online_info.salary_info %}
+                <p><strong>Salary Info:</strong></p>
+                <ul>{% for item in best_match.online_info.salary_info %}<li>{{ item }}</li>{% empty %}<li>No salary info snippets found.</li>{% endfor %}</ul>
+              {% endif %}
+               {% if best_match.online_info.career_path_info %}
+                <p><strong>Career Path Info:</strong></p>
+                <ul>{% for item in best_match.online_info.career_path_info %}<li>{{ item }}</li>{% empty %}<li>No career path info snippets found.</li>{% endfor %}</ul>
+              {% endif %}
+            {% endif %}
+
+            {% if best_match.search_urls %}
+              <hr><h5>Direct Search Links:</h5>
+              <ul>
+                {% for key, url in best_match.search_urls.items %}
+                  <li><a href="{{ url }}" target="_blank">{{ key }} for {{ best_match.title }}</a></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if ai_recommendations|length > 1 %}
+          <h3>Other Potential Matches:</h3>
+          {% for other_career in ai_recommendations %}
+            {% if not forloop.first %} {# Skip the best_match which is already displayed #}
+              <div class="card mb-2">
+                <div class="card-body">
+                  <h5 class="card-title">{{ other_career.title }} (Score: {{ other_career.score|floatformat:2 }})</h5>
+                  {% if other_career.details and other_career.details.description %}
+                    <p class="card-text card-text-truncate">{{ other_career.details.description }}</p>
+                  {% elif other_career.online_info and other_career.online_info.description %}
+                    <p class="card-text card-text-truncate">
+                        {% for item in other_career.online_info.description|slice:":1" %}{{ item }}{% endfor %}
+                    </p>
+                  {% else %}
+                     <p class="card-text"><em>Further details not readily available.</em></p>
+                  {% endif %}
+                  
+                  {% if other_career.search_urls %}
+                    <p>
+                    {% for key, url in other_career.search_urls.items %}
+                        {% if key == "General Information" %}
+                             <a href="{{ url }}" target="_blank">Search for {{ other_career.title }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+    {% elif request.method == 'POST' %}
+    <div class="row results-container justify-content-center mt-4">
+      <div class="col-lg-10 col-md-12">
+        <p>No career recommendations could be generated based on your input. Please try refining your description and skills.</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Optional: Display NLP Keywords if desired -->
+    {% if nlp_keywords %}
+    <div class="row results-container justify-content-center mt-4">
+      <div class="col-lg-8 col-md-10">
+        <div class="card mb-3">
+          <div class="card-header bg-warning text-dark">
+            Extracted Keywords from your input
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for keyword in nlp_keywords %}<li class="list-group-item">{{ keyword }}</li>{% empty %}<li>No keywords extracted.</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <!-- End of New AI-Driven Recommendation Display -->
+    
+  </div>
+
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

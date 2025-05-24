@@ -10,7 +10,7 @@ debugpy==1.8.12
 decorator==5.1.1
 Django==5.2.1
 executing==2.2.0
-experta==1.9.4
+experta==1.9.4 
 filelock==3.18.0
 frozendict==1.2
 fsspec==2025.5.0

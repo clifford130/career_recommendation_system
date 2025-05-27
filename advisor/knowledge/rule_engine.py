@@ -46,6 +46,10 @@ class CareerEngine(KnowledgeEngine):
     def recommend_software_dev(self):
         self.declare(Fact(recommendation="Teacher"))
 
+    @Rule(UserProfile(skills=lambda skills: 'sustainability' in skills or 'climate action' in skills or 'renewable energy' in skills))
+    def recommend_sustainability_consultant(self):
+        self.declare(Fact(recommendation="Sustainability Consultant"))
+
 def get_recommendation(profile_data):
     engine = CareerEngine()
     engine.reset()

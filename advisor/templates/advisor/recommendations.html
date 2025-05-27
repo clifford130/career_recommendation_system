@@ -70,11 +70,21 @@
         <h2>Best Career Match</h2>
         <div class="card mb-3">
           <div class="card-header bg-primary text-white">
-            <h4>{{ best_match.title }} (Score: {{ best_match.score|floatformat:2 }})</h4>
+            <h4>
+              {{ best_match.title }} 
+              {% if best_match.details.is_climate_action %}
+                <span class="badge bg-success">Climate Action ❤️</span>
+              {% endif %}
+              (Score: {{ best_match.score|floatformat:2 }})
+            </h4>
           </div>
           <div class="card-body">
             {% if best_match.details %}
               <p><strong>Description:</strong> {{ best_match.details.description }}</p>
+              {% if best_match.details.is_climate_action and best_match.details.sdg13_impact_description %}
+                <h5>Climate Action Impact (SDG 13):</h5>
+                <p>{{ best_match.details.sdg13_impact_description }}</p>
+              {% endif %}
               <h5>Required Skills:</h5>
               <ul>
                 {% for skill in best_match.details.required_skills %}<li>{{ skill }}</li>{% empty %}<li>No specific skills listed.</li>{% endfor %}
@@ -128,7 +138,13 @@
             {% if not forloop.first %} {# Skip the best_match which is already displayed #}
               <div class="card mb-2">
                 <div class="card-body">
-                  <h5 class="card-title">{{ other_career.title }} (Score: {{ other_career.score|floatformat:2 }})</h5>
+                  <h5 class="card-title">
+                    {{ other_career.title }}
+                    {% if other_career.details.is_climate_action %}
+                      <span class="badge bg-success ms-2">Climate Action ❤️</span>
+                    {% endif %}
+                    (Score: {{ other_career.score|floatformat:2 }})
+                  </h5>
                   {% if other_career.details and other_career.details.description %}
                     <p class="card-text card-text-truncate">{{ other_career.details.description }}</p>
                   {% elif other_career.online_info and other_career.online_info.description %}

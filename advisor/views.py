@@ -4,11 +4,17 @@ from .knowledge.semantic_network import find_related_careers
 from .knowledge.ontology import load_career_ontology, query_career_requirements
 from .knowledge.nlp_module import extract_keywords
 from .knowledge.ai_analysis import analyze_career_fit
-from .knowledge.frames import career_frames # Ensure this is present
+# from .knowledge.frames import career_frames # Ensure this is present
+from .data_loader import load_careers_from_csv # New import for CSV data
 from .knowledge.online_search import fetch_career_info, get_search_urls # New imports
 
 def career_recommendation(request):
     context = {} # Initialize context earlier
+
+    # Load career data from CSV and prepare for lookup
+    all_careers_data_list = load_careers_from_csv()
+    careers_by_title = {career['title']: career for career in all_careers_data_list}
+
     if request.method == 'POST':
         # Retrieve form data
         current_skills = request.POST.get('current_skills', '')
@@ -47,8 +53,8 @@ def career_recommendation(request):
                 career_title = ai_labels[i]
                 score = ai_scores[i]
                 
-                # Fetch details from frames.py
-                career_detail = career_frames.get(career_title) 
+                # Fetch details from CSV data
+                career_detail = careers_by_title.get(career_title) # This will now be a dictionary or None
                 # Fetch info from web
                 online_info = fetch_career_info(career_title)   
                 # Get search URLs
@@ -57,7 +63,7 @@ def career_recommendation(request):
                 ai_recommendations.append({
                     'title': career_title,
                     'score': score,
-                    'details': career_detail, # This is a CareerFrame object or None
+                    'details': career_detail, # This will now be a dictionary or None
                     'online_info': online_info,
                     'search_urls': search_urls,
                 })
